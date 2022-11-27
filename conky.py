@@ -28,7 +28,7 @@ word = []
 rx_match_word = re.compile(r'(conky_3000)')
 last_word_date: date
 last_word_datetime: datetime
-_client: Mastodon
+_client: Mastodon = None  # type: ignore
 
 # load values from json formatted .config file
 config = json.load(open(".config", 'r'))
