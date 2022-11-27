@@ -1,4 +1,4 @@
-#/bin/bash
+#/bin/sh
 
 INFO='\e[38;05;14m'
 NC='\033[0m' # No Color
