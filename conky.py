@@ -26,10 +26,9 @@ RE_EMPTY = r""
 
 word = []
 rx_match_word = re.compile(r'(conky_3000)')
-last_id = None
-last_word_date = None
-last_word_datetime = None
-_client = None
+last_word_date: date
+last_word_datetime: datetime
+_client: Mastodon
 
 # load values from json formatted .config file
 config = json.load(open(".config", 'r'))
@@ -42,23 +41,23 @@ def create() -> Mastodon:
 		api_base_url = config["api_base_url"],
 		user_agent = "conky v2.0 (using mastodonpy)"
 	)
-		
+
 def update_todays_word():
 	global rx_match_word
 	global last_word_date
 	global last_word_datetime
 
-	today = date.today()
+	today: date = date.today()
 	today_num = today.timetuple().tm_yday
 	word_index = today_num % len(WORDS)
-	
+
 	# Pee-Wee's Christmas, Merry Merry Christmas!
-	if (today.month == 12 and today.mday > 23) or (today.month == 1 and today.mday == 1):
+	if (today.month == 12 and today.day > 23) or (today.month == 1 and today.day == 1):
 		word = ["YEAR"]
 	else:
 		word = WORDS[word_index]
 	print(word)
- 
+
 	# update globals
 	rx_match_word = re.compile("\\b(" + ("|".join(word)) + ")\\b", re.I)
 	print(rx_match_word)
@@ -77,7 +76,7 @@ def conky_scream_real_loud() -> str:
 		# random binary conky glitch
 		"{:08d}".format(int(format(random.getrandbits(8), 'b'))))
 
-# Mastodon actions: 
+# Mastodon actions:
 def follow(client, user_id):
 	client.account_follow(user_id, reblogs=False)
 
@@ -113,7 +112,7 @@ def check_toot(client, toot):
 	print(toot['content'])
 	toot_text = BeautifulSoup(toot['content'], "html.parser").get_text()
 	print(toot_text)
- 
+
 	# from @lynnesbian:
 	# https://github.com/Lynnesbian/mstdn-ebooks/blob/master/reply.py
 	toot_compare = MATCH_USER.sub(RE_EMPTY, toot_text) #remove the initial mention
@@ -190,11 +189,11 @@ async def conky_start(do_toot = True):
 	print("Starting conky")
 	update_todays_word()
 	if do_toot:
-		toot_text = "Today's secret word is: \n\n" + word.join(" and ")
+		toot_text = "Today's secret word is: \n\n" + (" and ".join(word))
 		print(toot_text)
-		_client.toot(toot_text)
+		_client.status_post(toot_text)
 	print("Started conky.")
-  
+
 async def scheduler_start():
 	print("Starting scheduler")
 	schedule.every().day.at('09:00').do(conky_start)
@@ -202,7 +201,7 @@ async def scheduler_start():
 	while True:
 		schedule.run_pending()
 		await asyncio.sleep(1)
-  
+
 async def main():
 	print("Pee-Wee's Playhouse")
 	client_task = asyncio.create_task(client_start())
