@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+# conky
+.config
+.clientcred.secret
+.usercred.secret
