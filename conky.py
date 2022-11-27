@@ -107,6 +107,7 @@ def check_toot(client, toot):
 	# check for bot and skip
 	if toot['account']['bot']: return
 	print(", not a robot", end = "")
+	print("...")
 
 	# check for text to stop following
 	print(toot['content'])
@@ -136,7 +137,6 @@ def check_toot(client, toot):
 	if (search):
 		favorite(client, toot)
 		reply(client, toot, conky_scream_real_loud() + "\n #SecretWord")
-
 
 # Mastodon event handlers:
 def on_message(client, dm):
