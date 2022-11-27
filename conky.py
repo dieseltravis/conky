@@ -53,6 +53,7 @@ def update_todays_word():
 
 	# Pee-Wee's Christmas, Merry Merry Christmas!
 	if (today.month == 12 and today.day > 23) or (today.month == 1 and today.day == 1):
+		print("Christmas Special!")
 		word = ["YEAR"]
 	else:
 		word = WORDS[word_index]
@@ -77,21 +78,21 @@ def conky_scream_real_loud() -> str:
 		"{:08d}".format(int(format(random.getrandbits(8), 'b'))))
 
 # Mastodon actions:
-def follow(client, user_id):
+def follow(client: Mastodon, user_id):
 	client.account_follow(user_id, reblogs=False)
 
-def unfollow(client, user_id):
+def unfollow(client: Mastodon, user_id):
 	client.account_unfollow(id)(user_id)
 
-def favorite(client, status_id):
+def favorite(client: Mastodon, status_id):
 	client.status_favourite(status_id)
 
-def reply(client, toot, text):
+def reply(client: Mastodon, toot, text):
 	toot_text = "@" + toot['account']['acct'] + " " + text
 	print("Reply: " + toot_text)
 	client.status_post(toot_text, in_reply_to_id = toot)
 
-def check_toot(client, toot):
+def check_toot(client: Mastodon, toot):
 	# don't check boosts
 	if toot['reblog'] is not None: return
 	print("not a reblog", end = "")
@@ -139,24 +140,24 @@ def check_toot(client, toot):
 		reply(client, toot, conky_scream_real_loud() + "\n #SecretWord")
 
 # Mastodon event handlers:
-def on_message(client, dm):
+def on_message(client: Mastodon, dm):
 	# Reply to a DM
 	print("DM from " + dm["account"]["username"] + ": " + BeautifulSoup(dm['content'], "html.parser").get_text())
 	toot_text = "ask " + config["author"]
 	print(toot_text)
 	reply(client, dm, toot_text)
 
-def on_follow(client, user):
+def on_follow(client: Mastodon, user):
 	# Follow a user back
 	print("following " + user["username"])
-	follow(client, user.id)
+	follow(client, user['id'])
 
-def on_unfollow(client, user):
+def on_unfollow(client: Mastodon, user):
 	# Unfollow a user
 	print("unfollowing " + user["username"])
-	follow(client, user.id)
+	follow(client, user['id'])
 
-def on_timeline(client, toot):
+def on_timeline(client: Mastodon, toot):
 	check_toot(client, toot)
 
 class TimelineListener(StreamListener):
@@ -203,7 +204,7 @@ async def scheduler_start():
 		await asyncio.sleep(1)
 
 async def main():
-	print("Pee-Wee's Playhouse")
+	print("Pee-Wee's Playhouse!")
 	client_task = asyncio.create_task(client_start())
 	scheduler_task = asyncio.create_task(scheduler_start())
 	conky_task = asyncio.create_task(conky_start(False))

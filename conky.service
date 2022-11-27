@@ -1,0 +1,16 @@
+[Unit]
+Description=Conky the Mastodon robot
+After=network.target
+ 
+[Service]
+Type=simple
+ExecStart=python3 /etc/conky/conky.py
+WorkingDirectory=/etc/conky/
+User=pi
+Restart=on-failure
+SyslogIdentifier=conky.log
+RestartSec=5
+TimeoutStartSec=infinity
+ 
+[Install]
+WantedBy=multi-user.target
