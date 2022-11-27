@@ -4,16 +4,9 @@
 # portions of @lynnesbian's mstdn-ebooks below, license: Mozilla Public License Version 2.0.txt
 
 from mastodon import Mastodon, StreamListener
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from bs4 import BeautifulSoup
-import asyncio, html, json, os, random, re, schedule, time
-
-# this is only needed for register
-#SCOPES = [
-#	"read:accounts", "read:favourites", "read:follows", "read:notifications", "read:statuses",
-#	"write:favourites", "write:follows", "write:notifications", "write:statuses",
-#	"follow", "push"
-#]
+import asyncio, json, random, re, schedule
 
 # conky's words from the show's 5 seasons, in order
 WORDS = [
@@ -41,13 +34,6 @@ _client = None
 # load values from json formatted .config file
 config = json.load(open(".config", 'r'))
 
-#def register():
-#	Mastodon.create_app(
-#		 cfg["name"],
-#		 api_base_url = cfg["api_base_url"],
-#		 to_file = '.clientcred.secret'
-#	)
-
 def create() -> Mastodon:
 	return Mastodon(
 		client_id = config["key"],
@@ -56,13 +42,6 @@ def create() -> Mastodon:
 		api_base_url = config["api_base_url"],
 		user_agent = "conky v2.0 (using mastodonpy)"
 	)
-
-#def login(client): 
-#	client.log_in(
-#		config["email"],
-#		config["password"],
-#		to_file = '.usercred.secret'
-#	)
 		
 def update_todays_word():
 	global rx_match_word
@@ -116,24 +95,30 @@ def reply(client, toot, text):
 def check_toot(client, toot):
 	# don't check boosts
 	if toot['reblog'] is not None: return
+	print("not a reblog", end = "")
 	# only check public
 	if toot['visibility'] not in ["public"]: return
+	print(", public", end = "")
 	# skip favorited since they've already been processed
 	if toot['favourited']: return
+	print(", not fav'd", end = "")
 	# make sure it is since the last secret word set time
 	if toot['created_at'].timestamp() < last_word_datetime.timestamp(): return
+	print(", created since last word", end = "")
 	# check for bot and skip
 	if toot['account']['bot']: return
- 
+	print(", not a robot", end = "")
+
 	# check for text to stop following
 	print(toot['content'])
 	toot_text = BeautifulSoup(toot['content'], "html.parser").get_text()
 	print(toot_text)
  
-	# also from @lynnesbian:
+	# from @lynnesbian:
 	# https://github.com/Lynnesbian/mstdn-ebooks/blob/master/reply.py
 	toot_compare = MATCH_USER.sub(RE_EMPTY, toot_text) #remove the initial mention
 	toot_compare = toot_compare.lower() #treat text as lowercase for easier keyword matching (if this bot uses it)
+
 	# check for stop command
 	if toot_compare == "stop" or toot_compare == "unfollow":
 		print("Unfollow message from " + toot["account"]["username"] + ":" + toot_text)
@@ -172,17 +157,8 @@ def on_unfollow(client, user):
 	print("unfollowing " + user["username"])
 	follow(client, user.id)
 
-#def on_mention(client, toot):
-#	# Reply to any mention?
-#	check_toot(client, toot)
-
 def on_timeline(client, toot):
 	check_toot(client, toot)
-
-#def read_timeline(client):
-#	timeline = client.timeline_home(max_id=last_id)
-#	for toot in timeline:
-#		check_toot(toot)
 
 class TimelineListener(StreamListener):
 	def __init__(self):
@@ -199,7 +175,6 @@ class TimelineListener(StreamListener):
 			on_timeline(_client, update)
 		if update['visibility'] == 'direct':
 			on_message(_client, update)
-
 
 async def client_start():
 	global _client
