@@ -223,7 +223,7 @@ def client_start():
 		_client = create()
 		logging.info("Starting listener")
 		listener = TimelineListener()
-		_client.stream_user(listener, True)
+		_client.stream_user(listener, run_async = True, reconnect_async = True)
 	logging.info("Started client.")
 
 def conky_start(do_toot = True):
