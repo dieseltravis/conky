@@ -3,7 +3,7 @@
 INFO='\e[38;05;14m'
 NC='\033[0m' # No Color
 
-echo -e "${INFO}cp /etc/conky/conky.service /lib/systemd/system/${NC}";
+echo -e "${INFO}cp ~/conky/conky.service /lib/systemd/system/${NC}";
 sudo cp /etc/conky/conky.service /lib/systemd/system/
 echo -e "${INFO}systemctl enable conky${NC}";
 sudo systemctl enable conky

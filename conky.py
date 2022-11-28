@@ -6,7 +6,7 @@
 from mastodon import Mastodon, StreamListener
 from datetime import date, datetime
 from bs4 import BeautifulSoup
-import asyncio, json, random, re, schedule
+import asyncio, json, logging, random, re, schedule
 
 # conky's words from the show's 5 seasons, in order
 WORDS = [
@@ -53,15 +53,15 @@ def update_todays_word():
 
 	# Pee-Wee's Christmas, Merry Merry Christmas!
 	if (today.month == 12 and today.day > 23) or (today.month == 1 and today.day == 1):
-		print("Christmas Special!")
+		logging.info("Christmas Special!")
 		word = ["YEAR"]
 	else:
 		word = WORDS[word_index]
-	print(word)
+	logging.debug(word)
 
 	# update globals
 	rx_match_word = re.compile("\\b(" + ("|".join(word)) + ")\\b", re.I)
-	print(rx_match_word)
+	logging.debug(rx_match_word)
 	last_word_date = today
 	last_word_datetime = datetime.now()
 
@@ -89,31 +89,30 @@ def favorite(client: Mastodon, status_id):
 
 def reply(client: Mastodon, toot, text):
 	toot_text = "@" + toot['account']['acct'] + " " + text
-	print("Reply: " + toot_text)
+	logging.info("Reply: " + toot_text)
 	client.status_post(toot_text, in_reply_to_id = toot)
 
 def check_toot(client: Mastodon, toot):
 	# don't check boosts
 	if toot['reblog'] is not None: return
-	print("not a reblog", end = "")
+	logging.info("not a reblog")
 	# only check public
 	if toot['visibility'] not in ["public"]: return
-	print(", public", end = "")
+	logging.info("public")
 	# skip favorited since they've already been processed
 	if toot['favourited']: return
-	print(", not fav'd", end = "")
+	logging.info("not fav'd")
 	# make sure it is since the last secret word set time
 	if toot['created_at'].timestamp() < last_word_datetime.timestamp(): return
-	print(", created since last word", end = "")
+	logging.info("created since last word")
 	# check for bot and skip
 	if toot['account']['bot']: return
-	print(", not a robot", end = "")
-	print("...")
+	logging.info("not a robot")
 
 	# check for text to stop following
-	print(toot['content'])
+	logging.info(toot['content'])
 	toot_text = BeautifulSoup(toot['content'], "html.parser").get_text()
-	print(toot_text)
+	logging.info(toot_text)
 
 	# from @lynnesbian:
 	# https://github.com/Lynnesbian/mstdn-ebooks/blob/master/reply.py
@@ -122,7 +121,7 @@ def check_toot(client: Mastodon, toot):
 
 	# check for stop command
 	if toot_compare == "stop" or toot_compare == "unfollow":
-		print("Unfollow message from " + toot["account"]["username"] + ":" + toot_text)
+		logging.info("Unfollow message from " + toot["account"]["username"] + ":" + toot_text)
 		unfollow(client, toot["account"]["id"])
 		return
 
@@ -132,9 +131,9 @@ def check_toot(client: Mastodon, toot):
 		test_text = toot['spoiler_text']
 	else:
 		test_text = toot_text
-	print(rx_match_word)
+	logging.debug(rx_match_word)
 	search = rx_match_word.search(test_text)
-	print(search)
+	logging.debug(search)
 	if (search):
 		favorite(client, toot)
 		reply(client, toot, conky_scream_real_loud() + "\n #SecretWord")
@@ -142,19 +141,19 @@ def check_toot(client: Mastodon, toot):
 # Mastodon event handlers:
 def on_message(client: Mastodon, dm):
 	# Reply to a DM
-	print("DM from " + dm["account"]["username"] + ": " + BeautifulSoup(dm['content'], "html.parser").get_text())
+	logging.info("DM from " + dm["account"]["username"] + ": " + BeautifulSoup(dm['content'], "html.parser").get_text())
 	toot_text = "ask " + config["author"]
-	print(toot_text)
+	logging.debug(toot_text)
 	reply(client, dm, toot_text)
 
 def on_follow(client: Mastodon, user):
 	# Follow a user back
-	print("following " + user["username"])
+	logging.info("following " + user["username"])
 	follow(client, user['id'])
 
 def on_unfollow(client: Mastodon, user):
 	# Unfollow a user
-	print("unfollowing " + user["username"])
+	logging.info("unfollowing " + user["username"])
 	follow(client, user['id'])
 
 def on_timeline(client: Mastodon, toot):
@@ -162,15 +161,15 @@ def on_timeline(client: Mastodon, toot):
 
 class TimelineListener(StreamListener):
 	def __init__(self):
-		print("Listener created.")
+		logging.info("Listener created.")
 
 	def on_notification(self, notification):
-		print("Notification: " + notification['type'])
+		logging.info("Notification: " + notification['type'])
 		if notification['type'] == 'follow':
 			on_follow(_client, notification['account'])
 
 	def on_update(self, update):
-		print("Update: " + update['visibility'])
+		logging.info("Update: " + update['visibility'])
 		if update['visibility'] == 'public':
 			on_timeline(_client, update)
 		if update['visibility'] == 'direct':
@@ -178,25 +177,25 @@ class TimelineListener(StreamListener):
 
 async def client_start():
 	global _client
-	print("Starting client...")
+	logging.info("Starting client...")
 	if _client is None:
 		_client = create()
-		print("Starting listener")
+		logging.info("Starting listener")
 		listener = TimelineListener()
 		_client.stream_user(listener, True)
-	print("Started client.")
+	logging.info("Started client.")
 
 async def conky_start(do_toot = True):
-	print("Starting conky")
+	logging.info("Starting conky")
 	update_todays_word()
 	if do_toot:
 		toot_text = "Today's secret word is: \n\n" + (" and ".join(word))
-		print(toot_text)
+		logging.info(toot_text)
 		_client.status_post(toot_text)
-	print("Started conky.")
+	logging.info("Started conky.")
 
 async def scheduler_start():
-	print("Starting scheduler")
+	logging.info("Starting scheduler")
 	schedule.every().day.at('09:00').do(conky_start)
 	# use listener to read user stream
 	while True:
@@ -204,12 +203,14 @@ async def scheduler_start():
 		await asyncio.sleep(1)
 
 async def main():
-	print("Pee-Wee's Playhouse!")
+	logging.basicConfig(filename='conky.log',level=logging.DEBUG)
+	logging.info("Pee-Wee's Playhouse!")
+
 	client_task = asyncio.create_task(client_start())
 	scheduler_task = asyncio.create_task(scheduler_start())
 	conky_task = asyncio.create_task(conky_start(False))
-	print("Tasks created.")
-	await asyncio.gather(client_task, conky_task, scheduler_task)
+	logging.info("Tasks created.")
+	await asyncio.gather(client_task, scheduler_task, conky_task)
 
 if __name__ == "__main__":
 	asyncio.run(main())
