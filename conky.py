@@ -172,7 +172,14 @@ def on_message(client: Mastodon, dm):
 	# Reply to a DM
 	dm_text = get_html_text(dm['content'])
 	logging.info("DM from " + dm["account"]["username"] + ": " + dm_text)
+	# skip favorited since they've already been processed
+	if dm['favourited']: return
+	logging.info("not fav'd")
+	# check for bot and skip
+	if dm['account']['bot']: return
+	logging.info("not a robot")
 	toot_text = "@" + dm['account']['acct'] + " ask " + config["author"]
+	favorite(client, dm)
 	try:
 		client.status_post(toot_text, in_reply_to_id = dm, visibility = "direct")
 	except Exception as error:
