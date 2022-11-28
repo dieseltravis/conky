@@ -204,6 +204,7 @@ async def scheduler_start():
 
 async def main():
 	logging.basicConfig(filename='conky.log',level=logging.DEBUG)
+	logging.info(datetime.now().isoformat())
 	logging.info("Pee-Wee's Playhouse!")
 
 	client_task = asyncio.create_task(client_start())
