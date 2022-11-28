@@ -4,11 +4,11 @@ After=network.target
  
 [Service]
 Type=simple
-ExecStart=python3 ~/conky/conky.py
-WorkingDirectory=~/conky/
+ExecStart=python3 /home/pi/conky/conky.py
+WorkingDirectory=/home/pi/conky
 User=pi
 Restart=on-failure
-SyslogIdentifier=conky-log
+SyslogIdentifier=conky.txt
 RestartSec=5
 TimeoutStartSec=infinity
  
