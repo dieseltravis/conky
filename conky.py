@@ -34,13 +34,19 @@ _client: Mastodon = None  # type: ignore
 config = json.load(open(".config", 'r'))
 
 def create() -> Mastodon:
-	return Mastodon(
-		client_id = config["key"],
-		client_secret = config["secret"],
-		access_token = config["token"],
-		api_base_url = config["api_base_url"],
-		user_agent = "conky v2.0 (using mastodonpy)"
-	)
+	client: Mastodon
+	try:
+		client = Mastodon(
+				client_id = config["key"],
+				client_secret = config["secret"],
+				access_token = config["token"],
+				api_base_url = config["api_base_url"],
+				user_agent = "conky v2.0 (using mastodonpy)"
+			)
+	except Exception as error:
+		logging.error(repr(error))
+		exit()
+	return client
 
 def update_todays_word():
 	global rx_match_word
@@ -77,20 +83,41 @@ def conky_scream_real_loud() -> str:
 		# random binary conky glitch
 		"{:08d}".format(int(format(random.getrandbits(8), 'b'))))
 
+def get_html_text(html: str) -> str:
+  return BeautifulSoup(html, "html.parser").get_text()
+
 # Mastodon actions:
 def follow(client: Mastodon, user_id):
-	client.account_follow(user_id, reblogs=False)
+	logging.info("Follow user: " + user_id)
+	try:
+		client.account_follow(user_id, reblogs=False)
+	except Exception as error:
+		logging.error(repr(error))
+		pass
 
 def unfollow(client: Mastodon, user_id):
-	client.account_unfollow(id)(user_id)
+	logging.info("Unfollow user: " + user_id)
+	try:
+		client.account_unfollow(id)(user_id)
+	except Exception as error:
+		logging.error(repr(error))
+		pass
 
 def favorite(client: Mastodon, status_id):
-	client.status_favourite(status_id)
+	logging.info("Fav status: " + status_id)
+	try:
+		client.status_favourite(status_id)
+	except Exception as error:
+		logging.error(repr(error))
+		pass
 
 def reply(client: Mastodon, toot, text):
 	toot_text = "@" + toot['account']['acct'] + " " + text
 	logging.info("Reply: " + toot_text)
-	client.status_post(toot_text, in_reply_to_id = toot)
+	try:
+		client.status_post(toot_text, in_reply_to_id = toot)
+	except Exception as error:
+		logging.error(repr(error))
 
 def check_toot(client: Mastodon, toot):
 	# don't check boosts
@@ -111,13 +138,15 @@ def check_toot(client: Mastodon, toot):
 
 	# check for text to stop following
 	logging.info(toot['content'])
-	toot_text = BeautifulSoup(toot['content'], "html.parser").get_text()
+	toot_text = get_html_text(toot['content'])
 	logging.info(toot_text)
 
 	# from @lynnesbian:
 	# https://github.com/Lynnesbian/mstdn-ebooks/blob/master/reply.py
-	toot_compare = MATCH_USER.sub(RE_EMPTY, toot_text) #remove the initial mention
-	toot_compare = toot_compare.lower() #treat text as lowercase for easier keyword matching (if this bot uses it)
+	# remove the initial mention
+	toot_compare = MATCH_USER.sub(RE_EMPTY, toot_text)
+	# treat text as lowercase for easier keyword matching (if this bot uses it)
+	toot_compare = toot_compare.lower()
 
 	# check for stop command
 	if toot_compare == "stop" or toot_compare == "unfollow":
@@ -141,10 +170,14 @@ def check_toot(client: Mastodon, toot):
 # Mastodon event handlers:
 def on_message(client: Mastodon, dm):
 	# Reply to a DM
-	logging.info("DM from " + dm["account"]["username"] + ": " + BeautifulSoup(dm['content'], "html.parser").get_text())
-	toot_text = "ask " + config["author"]
-	logging.debug(toot_text)
-	reply(client, dm, toot_text)
+	dm_text = get_html_text(dm['content'])
+	logging.info("DM from " + dm["account"]["username"] + ": " + dm_text)
+	toot_text = "@" + dm['account']['acct'] + " ask " + config["author"]
+	try:
+		client.status_post(toot_text, in_reply_to_id = dm, visibility = "private")
+	except Exception as error:
+		logging.error(repr(error))
+		pass
 
 def on_follow(client: Mastodon, user):
 	# Follow a user back
