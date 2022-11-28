@@ -175,7 +175,7 @@ class TimelineListener(StreamListener):
 		if update['visibility'] == 'direct':
 			on_message(_client, update)
 
-async def client_start():
+def client_start():
 	global _client
 	logging.info("Starting client...")
 	if _client is None:
@@ -185,8 +185,9 @@ async def client_start():
 		_client.stream_user(listener, True)
 	logging.info("Started client.")
 
-async def conky_start(do_toot = True):
+def conky_start(do_toot = True):
 	logging.info("Starting conky")
+	logging.info(datetime.now().isoformat())
 	update_todays_word()
 	if do_toot:
 		toot_text = "Today's secret word is: \n\n" + (" and ".join(word))
@@ -207,11 +208,11 @@ async def main():
 	logging.info(datetime.now().isoformat())
 	logging.info("Pee-Wee's Playhouse!")
 
-	client_task = asyncio.create_task(client_start())
+	client_start()
 	scheduler_task = asyncio.create_task(scheduler_start())
-	conky_task = asyncio.create_task(conky_start(False))
+	conky_start(False)
 	logging.info("Tasks created.")
-	await asyncio.gather(client_task, scheduler_task, conky_task)
+	await asyncio.gather(scheduler_task)
 
 if __name__ == "__main__":
 	asyncio.run(main())

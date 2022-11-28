@@ -8,7 +8,7 @@ ExecStart=python3 ~/conky/conky.py
 WorkingDirectory=~/conky/
 User=pi
 Restart=on-failure
-SyslogIdentifier=conky.log
+SyslogIdentifier=conky-log
 RestartSec=5
 TimeoutStartSec=infinity
  
