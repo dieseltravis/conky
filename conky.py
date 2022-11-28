@@ -49,6 +49,7 @@ def create() -> Mastodon:
 	return client
 
 def update_todays_word():
+	global word
 	global rx_match_word
 	global last_word_date
 	global last_word_datetime
@@ -226,6 +227,7 @@ def client_start():
 	logging.info("Started client.")
 
 def conky_start(do_toot = True):
+	global word
 	logging.info("Starting conky")
 	logging.info(datetime.now().isoformat())
 	update_todays_word()
@@ -238,7 +240,7 @@ def conky_start(do_toot = True):
 async def scheduler_start():
   # does this even work async?
 	logging.info("Starting scheduler")
-	schedule.every().day.at('09:00').do(conky_start)
+	schedule.every().day.at('11:00').do(conky_start)
 	# use listener to read user stream
 	while True:
 		schedule.run_pending()
