@@ -240,7 +240,7 @@ def conky_start(do_toot = True):
 async def scheduler_start():
   # does this even work async?
 	logging.info("Starting scheduler")
-	schedule.every().day.at('11:00').do(conky_start)
+	schedule.every().day.at('09:00').do(conky_start)
 	# use listener to read user stream
 	while True:
 		schedule.run_pending()
