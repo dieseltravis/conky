@@ -88,7 +88,7 @@ def get_html_text(html: str) -> str:
 
 # Mastodon actions:
 def follow(client: Mastodon, user_id):
-	logging.info("Follow user: " + user_id)
+	logging.info("Follow user: " + str(user_id))
 	try:
 		client.account_follow(user_id, reblogs=False)
 	except Exception as error:
@@ -96,15 +96,15 @@ def follow(client: Mastodon, user_id):
 		pass
 
 def unfollow(client: Mastodon, user_id):
-	logging.info("Unfollow user: " + user_id)
+	logging.info("Unfollow user: " + str(user_id))
 	try:
-		client.account_unfollow(id)(user_id)
+		client.account_unfollow(user_id)
 	except Exception as error:
 		logging.error(repr(error))
 		pass
 
 def favorite(client: Mastodon, status_id):
-	logging.info("Fav status: " + status_id)
+	logging.info("Fav status: " + str(status_id))
 	try:
 		client.status_favourite(status_id)
 	except Exception as error:
@@ -236,6 +236,7 @@ def conky_start(do_toot = True):
 	logging.info("Started conky.")
 
 async def scheduler_start():
+  # does this even work async?
 	logging.info("Starting scheduler")
 	schedule.every().day.at('09:00').do(conky_start)
 	# use listener to read user stream
