@@ -174,7 +174,7 @@ def on_message(client: Mastodon, dm):
 	logging.info("DM from " + dm["account"]["username"] + ": " + dm_text)
 	toot_text = "@" + dm['account']['acct'] + " ask " + config["author"]
 	try:
-		client.status_post(toot_text, in_reply_to_id = dm, visibility = "private")
+		client.status_post(toot_text, in_reply_to_id = dm, visibility = "direct")
 	except Exception as error:
 		logging.error(repr(error))
 		pass
